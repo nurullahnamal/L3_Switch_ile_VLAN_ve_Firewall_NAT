@@ -4,7 +4,7 @@ L3 Switch Üzerinde VLAN Routing ve Firewall Entegrasyonu<br>
 Ağ ortamında L3 switch kullanarak routing işlemi yaparken, firewall ile bağlantının doğru yapılandırılması kritik bir adımdır. Bu makalede, L3 switch üzerinde VLAN yapılandırması, routing etkinleştirme ve firewall ile internet erişimi sağlama adımları ele alınacaktır.<br>
 
 L3 Switch Üzerinde VLAN Yapılandırması<br>
-
+ ![image alt](https://github.com/nurullahnamal/L3_Switch_ile_VLAN_ve_Firewall_NAT/blob/main/TOPOLOJI.png)
 İlk olarak, VLAN'ları oluşturup, her bir VLAN’a IP atayarak aktif hale getiriyoruz:<br>
 
 enable<br> configure terminal<br> vlan 10,11,12,13,14,100<br> interface vlan 10<br> no shutdown<br> ip address 192.168.10.1 255.255.255.0<br>
@@ -44,17 +44,17 @@ config system interface<br> edit port1<br> set ip 192.168.100.254 255.255.255.0<
 Bu aşamada, FortiGate varsayılan olarak VLAN 10 ve VLAN 11 ağlarını bilmediği için, bu ağlara ulaşabilmesi adına statik yönlendirme eklenmelidir.<br>
 
 config router static<br> edit 1<br> set gateway 192.168.100.1<br> set distance 10<br> set device port1<br> set dst 192.168.11.0 255.255.255.0<br> set dst 192.168.10.0 255.255.255.0<br> next<br> end<br>
-
+ ![image alt](https://github.com/nurullahnamal/L3_Switch_ile_VLAN_ve_Firewall_NAT/blob/main/firewall%20%20network%20static%20route.png)
 Alternatif olarak, tüm 192.168.x.x ağlarını özetleyerek (summary) şu şekilde ekleyebiliriz:<br>
-
+ ![image alt](https://github.com/nurullahnamal/L3_Switch_ile_VLAN_ve_Firewall_NAT/blob/main/static%20yol%20k%C4%B1saltma.png)
 192.168.0.0 255.255.0.0 192.168.100.1<br>
 
 Firewall WAN Yapılandırması<br>
-
+ ![image alt](https://github.com/nurullahnamal/L3_Switch_ile_VLAN_ve_Firewall_NAT/blob/main/WAN_GATEWAY.png)
 İnternet erişimi sağlamak için FortiGate’in WAN portuna uygun bir IP adresi atanmalıdır. Gerçek bir ISS bağlantısında, ISS tarafından sağlanan IP kullanılmalıdır. Ancak, test ortamında yerel bir IP tanımlanabilir.<br>
 
 Güvenlik Politikaları (IPv4 Policy)<br>
-
+ ![image alt](https://github.com/nurullahnamal/L3_Switch_ile_VLAN_ve_Firewall_NAT/blob/main/GENEL_NET%20POLICY.png)
 Varsayılan olarak firewall tüm trafiği kapalı tutar. Bu nedenle, gerekli güvenlik politikalarını tanımlamak gerekmektedir.<br>
 
 config firewall policy<br> edit 1<br> set srcintf port1<br> set dstintf wan1<br> set srcaddr all<br> set dstaddr all<br> set action accept<br> set schedule always<br> set service ALL<br> set logtraffic enable<br> end<br>
@@ -68,3 +68,4 @@ ip route 0.0.0.0 0.0.0.0 192.168.100.254<br>
 Bu yapılandırma ile, L3 switch üzerindeki VLAN'lar arası iletişim sağlanırken, internet çıkışı firewall üzerinden gerçekleştirilecektir.<br>
 
 Sonuç: Bu adımları takip ederek, L3 switch ve firewall entegrasyonunu başarılı bir şekilde tamamlamış olursunuz. Switch VLAN’lar arası routing yaparken, firewall güvenlik ve internet erişimini yönetir.<br>
+ ![image alt](https://github.com/nurullahnamal/L3_Switch_ile_VLAN_ve_Firewall_NAT/blob/main/8.8.8.8%20ping%20.gif)
