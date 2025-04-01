@@ -57,7 +57,7 @@ Güvenlik Politikaları (IPv4 Policy)<br>
  ![image alt](https://github.com/nurullahnamal/L3_Switch_ile_VLAN_ve_Firewall_NAT/blob/main/GENEL_NET%20POLICY.png)
 Varsayılan olarak firewall tüm trafiği kapalı tutar. Bu nedenle, gerekli güvenlik politikalarını tanımlamak gerekmektedir.<br>
 
-config firewall policy<br> edit 1<br> set srcintf port1<br> set dstintf wan1<br> set srcaddr all<br> set dstaddr all<br> set action accept<br> set schedule always<br> set service ALL<br> set logtraffic enable<br> end<br>
+config firewall policy <br>
 
 L3 Switch Üzerinde Varsayılan Yönlendirme (Default Route)<br>
 
