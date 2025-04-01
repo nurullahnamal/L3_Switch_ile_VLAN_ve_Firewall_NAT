@@ -1,109 +1,70 @@
 L3 Switch ile VLAN Yönlendirme ve Firewall Üzerinden NAT Yapılandırması
-Günümüzde ağ altyapılarında Layer 3 (L3) switch’ler kullanılarak VLAN’lar arasında routing işlemleri gerçekleştirilebilir. Bu makalede, L3 switch üzerinde VLAN yapılandırması yaparak, firewall entegrasyonu ile birlikte güvenli bir ağ geçidi oluşturma sürecini ele alacağız.
+L3 Switch Üzerinde VLAN Routing ve Firewall Entegrasyonu<br>
 
+Ağ ortamında L3 switch kullanarak routing işlemi yaparken, firewall ile bağlantının doğru yapılandırılması kritik bir adımdır. Bu makalede, L3 switch üzerinde VLAN yapılandırması, routing etkinleştirme ve firewall ile internet erişimi sağlama adımları ele alınacaktır.<br>
 
-Firewall Nat
-1. L3 Switch Üzerinde VLAN ve Routing Yapılandırması
-L3 switch üzerinde VLAN yapılandırmasını aşağıdaki adımları takip ederek gerçekleştirebiliriz:
+L3 Switch Üzerinde VLAN Yapılandırması<br>
 
-VLAN Oluşturma ve IP Tanımlama
-Öncelikle VLAN’ları oluşturuyoruz ve her VLAN’a IP adresi atıyoruz:
+İlk olarak, VLAN'ları oluşturup, her bir VLAN’a IP atayarak aktif hale getiriyoruz:<br>
 
-ENABLE
-CONFIGURE TERMINAL
-VLAN 10,11,12,13,14,100
+enable<br> configure terminal<br> vlan 10,11,12,13,14,100<br> interface vlan 10<br> no shutdown<br> ip address 192.168.10.1 255.255.255.0<br>
 
-INTERFACE VLAN 10
-NO SHUTDOWN
-IP ADDRESS 192.168.10.1 255.255.255.0
+interface vlan 11<br> no shutdown<br> ip address 192.168.11.1 255.255.255.0<br>
 
-INTERFACE VLAN 11
-NO SHUTDOWN
-IP ADDRESS 192.168.11.1 255.255.255.0
+interface vlan 12<br> no shutdown<br> ip address 192.168.12.1 255.255.255.0<br>
 
-INTERFACE VLAN 12
-NO SHUTDOWN
-IP ADDRESS 192.168.12.1 255.255.255.0
+interface vlan 13<br> no shutdown<br> ip address 192.168.13.1 255.255.255.0<br>
 
-INTERFACE VLAN 13
-NO SHUTDOWN
-IP ADDRESS 192.168.13.1 255.255.255.0
+interface vlan 14<br> no shutdown<br> ip address 192.168.14.1 255.255.255.0<br>
 
-INTERFACE VLAN 14
-NO SHUTDOWN
-IP ADDRESS 192.168.14.1 255.255.255.0
+interface vlan 100<br> no shutdown<br> ip address 192.168.100.1 255.255.255.0<br>
 
-INTERFACE VLAN 100
-NO SHUTDOWN
-IP ADDRESS 192.168.100.1 255.255.255.0
+VLAN’ların Access Mode’a Alınması<br>
 
-Routing İşleminin Aktif Edilmesi
-VLAN’lar arasında iletişimi sağlamak için switch üzerinde IP routing’i etkinleştirmemiz gerekmektedir:
+VLAN’ların iletişim kurabilmesi için uygun portlara atanması gerekmektedir:<br>
 
-Configure Terminal mod içerisinde yazmalıyız.
+interface gigabitethernet 0/0<br> switchport mode access<br> switchport access vlan 10<br>
 
-IP ROUTING
-Switchport Modlarının Tanımlanması
-Her VLAN için ilgili portları access moda alıyoruz:
+interface gigabitethernet 0/1<br> switchport mode access<br> switchport access vlan 11<br>
 
-INTERFACE GIGABITETHERNET 0/0
-SWITCHPORT MODE ACCESS
-SWITCHPORT ACCESS VLAN 10
+interface gigabitethernet 0/2<br> switchport mode access<br> switchport access vlan 100<br>
 
-INTERFACE GIGABITETHERNET 0/1
-SWITCHPORT MODE ACCESS
-SWITCHPORT ACCESS VLAN 11
+Routing’in Etkinleştirilmesi<br>
 
-INTERFACE  GIGABITETHERNET 0/3
-SWITCHPORT MODE ACCESS
-SWITCHPORT ACCESS VLAN 12
-Firewall tarafı için VLAN yapılandırmasını da şu şekilde yapıyoruz
+VLAN’lar arasında iletişimi sağlamak için routing’i aktif hale getiriyoruz:<br>
 
-INTERFACE  GIGABITETHERNET 0/2
-SWITCHPORT MODE ACCESS
-SWITCHPORT ACCESS VLAN 100
-2. FortiGate Firewall Yapılandırması
-Firewall cihazının LAN tarafına bakan portunu aşağıdaki gibi yapılandırıyoruz:
+configure terminal<br> ip routing<br>
 
-CONFIG SYSTEM INTERFACE
-EDIT PORT1
-SET IP 192.168.100.254 255.255.255.0
-END
-Bu yapılandırmadan sonra, firewall’un VLAN 10, VLAN 11ve VLAN 12 ağlarını tanımadığını unutmayalım. Bu yüzden firewall üzerinde statik rotalar tanımlamamız gerekmektedir.
+Firewall Yapılandırması<br>
 
+FortiGate cihazında LAN tarafına bakan arayüze IP tanımlanması:<br>
 
-CONFIG ROUTER STATIC  
-EDIT 1  
-SET GATEWAY 192.168.100.1  
-SET DISTANCE 10
-SET DEVICE PORT1
-SET DST 192.168.11.0 255.255.255.0
-NEXT
-END
-Bu işlemler tamamlandıktan sonra firewall arayüzüne 192.168.100.254 adresinden erişim sağlanabilir. Alternatif olarak, Network > Static Routes > Create New sekmesinden VLAN’lara yönelik statik rotaları manuel olarak ekleyebiliriz. Örneğin:
+config system interface<br> edit port1<br> set ip 192.168.100.254 255.255.255.0<br> end<br>
 
+Bu aşamada, FortiGate varsayılan olarak VLAN 10 ve VLAN 11 ağlarını bilmediği için, bu ağlara ulaşabilmesi adına statik yönlendirme eklenmelidir.<br>
 
+config router static<br> edit 1<br> set gateway 192.168.100.1<br> set distance 10<br> set device port1<br> set dst 192.168.11.0 255.255.255.0<br> set dst 192.168.10.0 255.255.255.0<br> next<br> end<br>
 
-192.168.0.0 255.255.0.0 192.168.100.1
-Lan interface den sonra WAN interface yapılandırmasını yapalım. Local yapı dan dolayı ip adresi 192.168.1.110 şeklinde yazarız.
+Alternatif olarak, tüm 192.168.x.x ağlarını özetleyerek (summary) şu şekilde ekleyebiliriz:<br>
 
-Modeme uygun ip olmalı.
+192.168.0.0 255.255.0.0 192.168.100.1<br>
 
+Firewall WAN Yapılandırması<br>
 
-3. Firewall WAN Bağlantısı ve Politikalarının Tanımlanması
-LAN yapılandırmasını tamamladıktan sonra, firewall’un WAN tarafına bakan arayüzüne IP adresi atamamız gerekmektedir. Eğer ağımız bir test ortamıysa, ISS tarafından verilen IP yerine yerel bir IP kullanabiliriz.
+İnternet erişimi sağlamak için FortiGate’in WAN portuna uygun bir IP adresi atanmalıdır. Gerçek bir ISS bağlantısında, ISS tarafından sağlanan IP kullanılmalıdır. Ancak, test ortamında yerel bir IP tanımlanabilir.<br>
 
+Güvenlik Politikaları (IPv4 Policy)<br>
 
-Firewall Static route yapılandırması.
+Varsayılan olarak firewall tüm trafiği kapalı tutar. Bu nedenle, gerekli güvenlik politikalarını tanımlamak gerekmektedir.<br>
 
+config firewall policy<br> edit 1<br> set srcintf port1<br> set dstintf wan1<br> set srcaddr all<br> set dstaddr all<br> set action accept<br> set schedule always<br> set service ALL<br> set logtraffic enable<br> end<br>
 
-4. L3 Switch Üzerinde Varsayılan Yönlendirme (Default Route) Tanımlama
-Switch üzerindeki networklerin dış dünya ile iletişimini sağlamak için varsayılan yönlendirme ekliyoruz:
+L3 Switch Üzerinde Varsayılan Yönlendirme (Default Route)<br>
 
+Tüm internet trafiğini firewall’a yönlendirmek için switch üzerinde varsayılan yönlendirme eklenir:<br>
 
-IP ROUTE 0.0.0.0 0.0.0.0 192.168.100.254
-Bu yapılandırma ile, L3 switch üzerindeki VLAN’lar arası iletişim sağlanırken, internet çıkışı firewall üzerinden gerçekleştirilecektir.
+ip route 0.0.0.0 0.0.0.0 192.168.100.254<br>
 
-Sonuç: Bu adımları takip ederek, L3 switch ve firewall entegrasyonunu başarılı bir şekilde tamamlamış olursunuz. Switch VLAN’lar arası routing yaparken, firewall güvenlik ve internet erişimini yönetir.
+Bu yapılandırma ile, L3 switch üzerindeki VLAN'lar arası iletişim sağlanırken, internet çıkışı firewall üzerinden gerçekleştirilecektir.<br>
 
-GN3 İLE 192.168.10.10 CİHAZI GOOGLE DNS İLE İLETİŞİM KURABİLİYOR.
+Sonuç: Bu adımları takip ederek, L3 switch ve firewall entegrasyonunu başarılı bir şekilde tamamlamış olursunuz. Switch VLAN’lar arası routing yaparken, firewall güvenlik ve internet erişimini yönetir.<br>
